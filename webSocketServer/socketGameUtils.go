@@ -1,34 +1,36 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gorilla/websocket"
+	"sync"
 )
 
 type Player struct {
-	Id		int				`json:"id"`
-	X		int				`json:"x"`
-	Y		int				`json:"y"`
-	Z		int				`json:"z"`
-	Entity	interface{}		`json:"entity"`
+	Id     int         `json:"id"`
+	X      float64     `json:"x"`
+	Y      float64     `json:"y"`
+	Z      float64     `json:"z"`
+	Entity interface{} `json:"entity"`
 }
 
 type PlayerUpdate struct {
-	Id		int				`json:"id"`
-	X		int				`json:"x"`
-	Y		int				`json:"y"`
-	Z		int				`json:"z"`
+	Id int     `json:"id"`
+	X  float64 `json:"x"`
+	Y  float64 `json:"y"`
+	Z  float64 `json:"z"`
 }
 
 type PlayerData struct {
-	Id		int				`json:"id"`
-	Players	map[int]Player		`json:"players"`
+	Id      int            `json:"id"`
+	Players map[int]Player `json:"players"`
 }
 
+var playerMapMutex = sync.RWMutex{}
 var Players = make(map[int]Player)
 var idIcr = 0
 
-func initializePlayer(conn *websocket.Conn) {
-	idIcr++
+func initializePlayer(conn *websocket.Conn) int {
 	player := Player{
 		Id:     idIcr,
 		X:      0,
@@ -36,19 +38,27 @@ func initializePlayer(conn *websocket.Conn) {
 		Z:      0,
 		Entity: nil,
 	}
-	Players[player.Id] = player
 
-	playerData := PlayerData {
+	playerMapMutex.RLock()
+	Players[player.Id] = player
+	playerMapMutex.RUnlock()
+
+	fmt.Println(Players)
+
+	idIcr++
+
+	playerData := PlayerData{
 		Id:      player.Id,
 		Players: Players,
 	}
 
 	_ = broadcastData("playerJoined", player, conn)
 	_ = sendData("playerData", playerData, conn)
+	return player.Id
 }
 
 func positionUpdate(conn *websocket.Conn, data PlayerUpdate) {
-	Players[data.Id] = Player {
+	Players[data.Id] = Player{
 		Id:     Players[data.Id].Id,
 		X:      data.X,
 		Y:      data.Y,
