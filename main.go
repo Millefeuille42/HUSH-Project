@@ -21,16 +21,16 @@ func checkError(err error) {
 
 func readWebSocket(conn *websocket.Conn) {
 	for {
-		messageType, p, err := conn.ReadMessage()
+		_, p, err := conn.ReadMessage()
 		if err != nil {
 			log.Println(err)
 			return
 		}
 
 		fmt.Printf("\t%s -> %s", conn.RemoteAddr(), p)
-		for _, connection := range connList {
-			_ = connection.WriteMessage(messageType, p)
-		}
+		//for _, connection := range connList {
+		//	_ = connection.WriteMessage(messageType, p)
+		//}
 	}
 }
 
@@ -46,12 +46,13 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 
 	log.Println("Client" + ws.RemoteAddr().String() + "connected")
 
-	initializePlayer(ws)
 	connList = append(connList, ws)
+	initializePlayer(ws)
 	readWebSocket(ws)
 }
 
 func main() {
+	http.HandleFunc("/", wsEndpoint)
 	http.HandleFunc("/", wsEndpoint)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
