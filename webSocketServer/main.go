@@ -53,8 +53,5 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/", wsEndpoint)
-	go log.Fatal(http.ListenAndServe(":8080", nil))
-
-	fs := http.FileServer(http.Dir("./assets"))
-	log.Fatal(http.ListenAndServe(":8000", fs))
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
