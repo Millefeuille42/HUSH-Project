@@ -27,7 +27,7 @@ func readWebSocket(conn *websocket.Conn) {
 			return
 		}
 
-		fmt.Printf("\t%s -> %s", conn.RemoteAddr(), p)
+		fmt.Printf("\t%s -> %s\n", conn.RemoteAddr(), p)
 		//for _, connection := range connList {
 		//	_ = connection.WriteMessage(messageType, p)
 		//}
@@ -53,5 +53,8 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/", wsEndpoint)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	go log.Fatal(http.ListenAndServe(":8080", nil))
+
+	fs := http.FileServer(http.Dir("./assets"))
+	log.Fatal(http.ListenAndServe(":8000", fs))
 }
