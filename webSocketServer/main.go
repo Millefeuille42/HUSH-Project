@@ -1,10 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
+	"github.com/mitchellh/mapstructure"
 	"log"
 	"net/http"
+	"strings"
 )
 
 var upgrader = websocket.Upgrader{
@@ -13,13 +16,9 @@ var upgrader = websocket.Upgrader{
 }
 var connList = make([]*websocket.Conn, 0)
 
-func checkError(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
 func readWebSocket(conn *websocket.Conn) {
+	message := GameMessage{}
+
 	for {
 		_, p, err := conn.ReadMessage()
 		if err != nil {
@@ -28,9 +27,23 @@ func readWebSocket(conn *websocket.Conn) {
 		}
 
 		fmt.Printf("\t%s -> %s\n", conn.RemoteAddr(), p)
-		//for _, connection := range connList {
-		//	_ = connection.WriteMessage(messageType, p)
-		//}
+
+		if strings.HasPrefix(string(p), "initialize") {
+			initializePlayer(conn)
+		} else {
+			err = json.Unmarshal(p, &message)
+			if err != nil {
+				continue
+			}
+			if strings.HasPrefix(message.Method, "positionUpdate") {
+				data := PlayerUpdate{}
+				err = mapstructure.Decode(message.Data, &data)
+				if err != nil {
+					continue
+				}
+				positionUpdate(conn, data)
+			}
+		}
 	}
 }
 
