@@ -1,18 +1,84 @@
 <!doctype html>
 <html>
 <head>
-    <meta name='viewport' content='width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no' />
     <meta charset='utf-8'>
-    <link rel="stylesheet" type="text/css" href="styles.css">
-    <link rel="manifest" href="manifest.json">
-    <style></style>
-    <title>My First Project</title>
-    <script src="playcanvas-stable.min.js"></script>
-    <script src="__settings__.js"></script>
+    <link rel="stylesheet" href="./graphical.css">
+    <title>Prototype</title>
+    <script src="./randomGenerator.js"></script>
 </head>
 <body>
-    <script src="__modules__.js"></script>
-    <script src="__start__.js"></script>
-    <script src="__loading__.js"></script>
+    <iframe id="Canvas"
+            title="Canvas"
+            width="75%"
+            height="720"
+            src="./game/index.html"
+            style="overflow: hidden;"
+            marginheight="0"
+            marginwidth="0"
+            onresize="autoRatio()" >
+    </iframe>
+
+    <div class="controls">
+        <label>
+            <span>Name:</span>
+            <input id="name" type="text">
+            <input type="button" value="Generate Name" onclick="clickName()">
+        </label>
+    </div>
+    <div id="text">
+        Controls:
+        <ul>
+            <li>W/Z: Forward</li>
+            <li>A/Q: Left</li>
+            <li>S: Backward</li>
+            <li>D: Right</li>
+        </ul>
+    </div>
+    <div>
+        <label for="input">Message: </label>
+        <input id="input" type="text" value="Hello world!">
+        <button type="button" id="send" onclick="sendMessage()">Send</button>
+        <div id="output"></div>
+    </div>
+
+    <script type="application/javascript">
+        function sendMessage(mess) {
+            var socket = document.getElementById("Canvas").contentWindow.exposeSocket()
+
+            var messageJson = JSON.stringify({
+                method: "chat",
+                data: {
+                    content: document.getElementById("input").value,
+                    name: document.getElementById("name").value
+                }
+
+            })
+
+            if (socket.readyState >= 2) {
+                socket.close();
+                return;
+            }
+            socket.send(messageJson)
+        }
+
+        function clickName() {
+            document.getElementById("name").value = generateName()
+        }
+
+        function getName() {
+            return document.getElementById("name").value
+        }
+
+        function autoRatio() {
+            var winRatio = screen.width / screen.height
+            var canvasWin = document.getElementById("Canvas")
+            var canvasHeight = parseInt(window.getComputedStyle(canvasWin).width) / winRatio
+            canvasWin.setAttribute("height", (canvasHeight / (4/3)).toString())
+        }
+    </script>
+
+    <script> clickName() </script>
 </body>
 </html>
+
+

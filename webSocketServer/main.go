@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/mitchellh/mapstructure"
 	"log"
@@ -26,9 +27,9 @@ func readWebSocket(conn *websocket.Conn) {
 			log.Println(err)
 			if isInit {
 				_ = broadcastData("playerDisconnect", PlayerUpdate{Id: id}, conn)
-				playerMapMutex.RLock()
+				playerMapMutex.Lock()
 				delete(Players, id)
-				playerMapMutex.RUnlock()
+				playerMapMutex.Unlock()
 			}
 			return
 		}
@@ -41,12 +42,19 @@ func readWebSocket(conn *websocket.Conn) {
 		} else {
 			err = json.Unmarshal(p, &message)
 			if err != nil {
+				log.Println(err)
 				continue
 			}
-			if strings.HasPrefix(message.Method, "positionUpdate") {
+
+			fmt.Println(message)
+
+			if strings.HasPrefix(message.Method, "chat") {
+				_ = handleChat(message, conn)
+			} else if strings.HasPrefix(message.Method, "positionUpdate") {
 				data := PlayerUpdate{}
 				err = mapstructure.Decode(message.Data, &data)
 				if err != nil {
+					log.Println(err)
 					continue
 				}
 				positionUpdate(conn, data)
@@ -72,7 +80,9 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 	readWebSocket(ws)
 }
 
+
+
 func main() {
-	http.HandleFunc("/", wsEndpoint)
+	http.HandleFunc("/game/", wsEndpoint)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

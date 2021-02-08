@@ -23,11 +23,13 @@ func broadcastData(method string, data interface{}, conn *websocket.Conn) error 
 		return err
 	}
 
+	wsMutex.Lock()
 	for _, connection := range connList {
 		if connection != conn {
 			_ = connection.WriteMessage(1, messageJson)
 		}
 	}
+	wsMutex.Unlock()
 	return nil
 }
 
@@ -42,5 +44,8 @@ func sendData(method string, data interface{}, conn *websocket.Conn) error {
 		log.Print(err)
 		return err
 	}
-	return conn.WriteMessage(1, messageJson)
+	wsMutex.Lock()
+	err = conn.WriteMessage(1, messageJson)
+	wsMutex.Unlock()
+	return err
 }

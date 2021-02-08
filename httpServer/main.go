@@ -15,6 +15,7 @@ func httpEndpoint(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/", httpEndpoint)
+	fs := http.FileServer(http.Dir("./assets"))
+	http.Handle("/", fs)
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }
